@@ -4,7 +4,7 @@ import java.util.Set;
 import lombok.Data;
 
 @Data
-public class ProductoRequest {
+public class ModProdRequest {
     private String titulo;
     private Double precio;
     private String descripcion;
@@ -12,5 +12,4 @@ public class ProductoRequest {
     private Double descuento;
     private Boolean estadoDescuento;
     private Set<Long> categoriasIds;
-    private String imagenBase64;
 }

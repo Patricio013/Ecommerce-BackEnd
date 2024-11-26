@@ -1,15 +1,17 @@
 package com.ecomerce.demo.Services;
 
 import java.util.Set;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.ecomerce.demo.Clases.Categorias;
 import com.ecomerce.demo.Clases.Producto;
 import com.ecomerce.demo.Clases.Usuarios;
 import com.ecomerce.demo.Repositorys.CategoriasRepository;
 import com.ecomerce.demo.Repositorys.ProductoRepository;
+import com.ecomerce.demo.Request.ModProdRequest;
 import com.ecomerce.demo.Request.ProductoRequest;
 import com.ecomerce.demo.Response.CategoriaProdResponse;
 import com.ecomerce.demo.Response.ProductoResponse;
@@ -17,6 +19,7 @@ import com.ecomerce.demo.Response.ProductoResponse;
 import java.nio.file.Path;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -54,7 +57,7 @@ public class ProductoService {
         return mapearAProductoResponse(producto);
     }
 
-    public ProductoResponse crearProducto(ProductoRequest productoRequest, MultipartFile imagen) throws IOException {
+    public ProductoResponse crearProducto(ProductoRequest productoRequest) throws IOException {
         Producto producto = new Producto();
         producto.setTitulo(productoRequest.getTitulo());
         producto.setPrecio(productoRequest.getPrecio());
@@ -66,13 +69,15 @@ public class ProductoService {
             producto.setDescuento(0.00);
         }
         producto.setEstadoDescuento(productoRequest.getEstadoDescuento());
-        if (!imagen.isEmpty()) {
-            Path directorioImagenes = Paths.get("demo//src/imagenes");
+        if (productoRequest.getImagenBase64() != null && !productoRequest.getImagenBase64().isEmpty()) {
+            String base64Data = productoRequest.getImagenBase64().split(",")[1]; 
+            byte[] decodedBytes = Base64.getDecoder().decode(base64Data);
+            Path directorioImagenes = Paths.get("src/main/java/com/ecomerce/demo/static/imagenes");
             String rutaAbsoluta = directorioImagenes.toFile().getAbsolutePath();
-            byte[] bytesIMG = imagen.getBytes();
-            Path rutaCompleta = Paths.get(rutaAbsoluta + "//" + imagen.getOriginalFilename());
-            Files.write(rutaCompleta, bytesIMG);
-            producto.setImagenUrl(imagen.getOriginalFilename());
+            String nombreArchivo = UUID.randomUUID() + ".jpg"; 
+            Path rutaCompleta = Paths.get(rutaAbsoluta + "//" + nombreArchivo);
+            Files.write(rutaCompleta, decodedBytes);
+            producto.setImagenUrl(nombreArchivo);
         }
         Usuarios usuario = authenticationService.obtenerUsuarioAutenticado();
         producto.setUsuario(usuario);
@@ -86,7 +91,7 @@ public class ProductoService {
         return mapearAProductoResponse(producto);
     }
 
-    public ProductoResponse actualizarProducto(long id, ProductoRequest productoRequest) {
+    public ProductoResponse actualizarProducto(long id, ModProdRequest productoRequest) {
         Producto producto = productoRepository.findById(id);
         producto.setTitulo(productoRequest.getTitulo());
         producto.setPrecio(productoRequest.getPrecio());
@@ -103,15 +108,30 @@ public class ProductoService {
         productoRepository.delete(producto);
     }
 
-    public void subirImagen(long id, MultipartFile imagen) throws IOException{
+    public void subirImagen(long id, String imagen) throws IOException{
         Producto producto = productoRepository.findById(id);
-        String nombreArchivo = System.currentTimeMillis() + "_" + imagen.getOriginalFilename();
-        Path rutaArchivo = Paths.get("uploads/" + nombreArchivo);
-        Files.createDirectories(rutaArchivo.getParent());
-        Files.write(rutaArchivo, imagen.getBytes());
-        String urlImagen = "http://localhost:4002/uploads/" + nombreArchivo;
-        producto.setImagenUrl(urlImagen);
-        productoRepository.save(producto);
+        if (imagen != null && !imagen.isEmpty()) {
+            if (producto.getImagenUrl() != null) {
+                Path directorioImagenes = Paths.get("src/main/java/com/ecomerce/demo/static/imagenes");
+                String rutaAbsoluta = directorioImagenes.toFile().getAbsolutePath();
+                Path rutaAntigua = Paths.get(rutaAbsoluta + "//" + producto.getImagenUrl());
+                if (Files.exists(rutaAntigua)) {
+                    Files.delete(rutaAntigua);
+                }
+            }
+    
+            String base64Data = imagen.contains(",") ? imagen.split(",")[1] : imagen;
+            byte[] decodedBytes = Base64.getDecoder().decode(base64Data);
+            Path directorioImagenes2 = Paths.get("src/main/java/com/ecomerce/demo/static/imagenes");
+            if (!Files.exists(directorioImagenes2)) {
+                Files.createDirectories(directorioImagenes2);
+            }
+            String nombreArchivo = UUID.randomUUID() + ".jpg";
+            Path rutaCompleta = directorioImagenes2.resolve(nombreArchivo);
+            Files.write(rutaCompleta, decodedBytes);
+            producto.setImagenUrl(nombreArchivo);
+            productoRepository.save(producto);
+        }
     }
 
     public void eliminarImagen(long id) {
@@ -150,6 +170,17 @@ public class ProductoService {
             auxiliar.setNombre(categoria.getNombre());
             categorias.add(auxiliar);
         }
+        String ImagenUrl = null;
+        if (producto.getImagenUrl() != null) {
+            try {
+                Path rutaImagen = Paths.get("src/main/java/com/ecomerce/demo/static/imagenes/" + producto.getImagenUrl());
+                byte[] imagenBytes = Files.readAllBytes(rutaImagen);
+                String imagenBase64 = Base64.getEncoder().encodeToString(imagenBytes);
+                ImagenUrl = "data:image/jpeg;base64," + imagenBase64;
+            } catch (IOException e) {
+                throw new RuntimeException("Error al leer la imagen: " + e.getMessage());
+            }
+        }
         return new ProductoResponse(
             producto.getId(),
             producto.getTitulo(),
@@ -159,7 +190,7 @@ public class ProductoService {
             producto.getStock(),
             producto.getDescuento(),
             producto.getEstadoDescuento(),
-            producto.getImagenUrl(),
+            ImagenUrl,
             categorias
         );
     }

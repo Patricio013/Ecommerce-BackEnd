@@ -2,11 +2,11 @@ package com.ecomerce.demo.Controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
+import com.ecomerce.demo.Request.ImagenRequest;
+import com.ecomerce.demo.Request.ModProdRequest;
 import com.ecomerce.demo.Request.ProductoRequest;
 import com.ecomerce.demo.Response.ProductoResponse;
 import com.ecomerce.demo.Services.ProductoService;
@@ -22,9 +22,9 @@ public class ProductoAdminController {
     @Autowired
     private ProductoService productoService;
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ProductoResponse> crearProducto(@RequestBody ProductoRequest productoRequest, @RequestParam("imagen") MultipartFile imagen) throws IOException{
-        ProductoResponse producto = productoService.crearProducto(productoRequest, imagen);
+    @PostMapping
+    public ResponseEntity<ProductoResponse> crearProducto(@RequestBody ProductoRequest productoRequest) throws IOException{
+        ProductoResponse producto = productoService.crearProducto(productoRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(producto);
     }
 
@@ -40,7 +40,7 @@ public class ProductoAdminController {
     }
     
     @PutMapping("/actualizar")
-    public ResponseEntity<ProductoResponse> actualizarProducto(@RequestParam long id, @RequestBody ProductoRequest productoRequest) {
+    public ResponseEntity<ProductoResponse> actualizarProducto(@RequestParam long id, @RequestBody ModProdRequest productoRequest) {
         ProductoResponse producto = productoService.actualizarProducto(id, productoRequest);
         return ResponseEntity.ok(producto);
     }
@@ -52,9 +52,9 @@ public class ProductoAdminController {
     }
 
     @PostMapping("/subir/imagen")
-    public ResponseEntity<String> subirImagen(@RequestParam long id, @RequestParam("imagen") MultipartFile imagen) throws IOException{
+    public ResponseEntity<String> subirImagen(@RequestParam long id, @RequestBody ImagenRequest imagen2) throws IOException{
         try {
-            productoService.subirImagen(id, imagen);
+            productoService.subirImagen(id, imagen2.getImagen());
             return ResponseEntity.ok("Imagen subida correctamente");
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al subir la imagen: " + e.getMessage());

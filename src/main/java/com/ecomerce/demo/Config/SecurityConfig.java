@@ -44,6 +44,7 @@ public class SecurityConfig {
                                                 .requestMatchers("/pedidos/realizar").hasAnyAuthority(Role.USER.name())
                                                 .requestMatchers("/pedidos/ObtenerTodosUser").hasAnyAuthority(Role.USER.name())
                                                 .requestMatchers("/pedidos/ObtenerTodosAdmin").hasAnyAuthority(Role.ADMIN.name())
+                                                .requestMatchers("/imagenes/**").permitAll()
                                                 .anyRequest()
                                                 .authenticated())
                                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))

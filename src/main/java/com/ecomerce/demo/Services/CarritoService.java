@@ -54,6 +54,7 @@ public class CarritoService {
         return mapearaCarritoResponse(carrito);
     }
 
+    @Transactional
     public CarritoResponse agregarProducto(long productId, int cantidad) {
         Usuarios usuario = authenticationService.obtenerUsuarioAutenticado();
         Carrito carrito = carritoRepository.findCarrito(usuario.getId());
@@ -64,7 +65,19 @@ public class CarritoService {
             carrito = carritoRepository.save(carrito);
         }
         Producto producto = productoRepository.findById(productId);
-        carrito.agregarProducto(producto, cantidad);
+        ProductoCarrito productoCarrito = carrito.getProductos().stream()
+        .filter(pc -> pc.getProducto().equals(producto))
+        .findFirst()
+        .orElse(null);
+        if (productoCarrito !=null){
+            int nuevaCantidad = cantidad + productoCarrito.getCantidad();
+            if (nuevaCantidad > producto.getStock()) {
+                throw new RuntimeException("Cantidad solicitada excede el stock disponible");
+            }
+            productoCarrito.setCantidad(productoCarrito.getCantidad() + cantidad);
+        } else {
+            carrito.agregarProducto(producto, cantidad);
+        }
         carrito = carritoRepository.save(carrito);
         return mapearaCarritoResponse(carrito);
     }

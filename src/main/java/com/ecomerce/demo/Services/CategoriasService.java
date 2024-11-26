@@ -2,8 +2,15 @@ package com.ecomerce.demo.Services;
 
 import java.util.List;
 import java.util.Set;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashSet;
+import java.nio.file.Path;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -85,7 +92,19 @@ public class CategoriasService {
             productoResponse.setStock(producto.getStock());
             productoResponse.setEstadoDescuento(producto.getEstadoDescuento());
             productoResponse.setDescuento(producto.getDescuento());
-            productoResponse.setImagenUrl(producto.getImagenUrl());
+            if (producto.getImagenUrl() != null) {
+                try {
+                    Path rutaImagen = Paths.get("src/main/java/com/ecomerce/demo/static/imagenes/" + producto.getImagenUrl());
+                    byte[] imagenBytes = Files.readAllBytes(rutaImagen);
+                    String imagenBase64 = Base64.getEncoder().encodeToString(imagenBytes);
+                    productoResponse.setImagenUrl("data:image/jpeg;base64," + imagenBase64);
+                } catch (IOException e) {
+                    throw new RuntimeException("Error al leer la imagen: " + e.getMessage());
+                }
+            } else {
+                productoResponse.setImagenUrl(producto.getImagenUrl());
+            }
+            System.out.println(productoResponse.getImagenUrl());
             Set<CategoriaProdResponse> categorias = new HashSet<>();
             List<Long> categoriasId = productoRepository.findCategoriaIdsByProductoId(producto.getId());
             for (long id: categoriasId){
