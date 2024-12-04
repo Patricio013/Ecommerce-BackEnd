@@ -14,3 +14,5 @@ Pagina Principal sin ingresar sesion:
 Pagina Principal ingresando como Vendedor. Se muestran las funciones en el navbar del Vendedor.
 ![image](https://github.com/user-attachments/assets/68279cf7-86ed-4d5b-8563-8c68e27c64e3)
 
+Pagina Principal ingresando como Comprador. Se muestran las funciones tanto en el body como en el navbar del Comprador. 
+![image](https://github.com/user-attachments/assets/3e6ced61-9622-4ca5-a129-7219352011dd)
