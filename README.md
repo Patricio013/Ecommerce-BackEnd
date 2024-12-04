@@ -10,3 +10,7 @@ CSS: Para el diseño de la pagina web.
 
 Pagina Principal sin ingresar sesion:
 ![image](https://github.com/user-attachments/assets/aaa43abf-fba4-4683-83c6-df7e47382474)
+
+Pagina Principal ingresando como Vendedor. Se muestran las funciones en el navbar del Vendedor.
+![image](https://github.com/user-attachments/assets/68279cf7-86ed-4d5b-8563-8c68e27c64e3)
+
